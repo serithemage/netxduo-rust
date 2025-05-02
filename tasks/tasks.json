@@ -1,0 +1,388 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Project Setup and Repository Structure",
+      "description": "Set up the project repository with appropriate crate structure, dependencies, and build configuration for the NetXDuo Rust port.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a new Rust workspace with multiple crates: core, protocols, security, and platform. Configure Cargo.toml files with appropriate dependencies. Set up no_std support with optional std features. Configure build scripts for cross-compilation to embedded targets. Add initial documentation structure including README, CONTRIBUTING, and LICENSE files. Set up directory structure that mirrors the logical components of NetXDuo.",
+      "testStrategy": "Verify that the project builds successfully with both std and no_std configurations. Test cross-compilation for at least one embedded target platform.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create Workspace Structure and Base Configuration",
+          "description": "Initialize the Rust workspace with the core directory structure and base configuration files to establish the foundation for the NetXDuo port.",
+          "dependencies": [],
+          "details": "1. Create a new directory for the project (e.g., `netxduo-rust`)\n2. Initialize a Git repository with `git init`\n3. Create a root `Cargo.toml` with workspace configuration:\n```toml\n[workspace]\nmembers = [\n  \"netxduo-core\",\n  \"netxduo-protocols\",\n  \"netxduo-security\",\n  \"netxduo-platform\"\n]\nresolver = \"2\"\n```\n4. Add documentation files:\n   - README.md with project overview, goals, and getting started guide\n   - CONTRIBUTING.md with contribution guidelines\n   - LICENSE file (likely MIT or Apache 2.0)\n   - CHANGELOG.md for version history\n5. Create a `.gitignore` file with Rust-specific entries\n6. Set up initial GitHub Actions workflow for CI in `.github/workflows/`\n7. Test by running `cargo build` to verify workspace configuration",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 2,
+          "title": "Set Up Core Crate with no_std Support",
+          "description": "Create the netxduo-core crate with no_std configuration and optional std features to support both embedded and standard environments.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Create the netxduo-core directory and initialize the crate:\n```bash\nmkdir -p netxduo-core/src\ntouch netxduo-core/src/lib.rs\n```\n2. Configure netxduo-core/Cargo.toml with no_std support:\n```toml\n[package]\nname = \"netxduo-core\"\nversion = \"0.1.0\"\nedition = \"2021\"\nauthors = [\"Your Name <your.email@example.com>\"]\ndescription = \"Core functionality for NetXDuo Rust port\"\n\n[features]\ndefault = []\nstd = []\n\n[dependencies]\nlog = { version = \"0.4\", default-features = false }\nheapless = \"0.8\"\n\n[dev-dependencies]\ncriterion = { version = \"0.5\", optional = true }\n```\n3. Set up the lib.rs file with no_std attribute and feature gates:\n```rust\n#![no_std]\n#![cfg_attr(feature = \"std\", feature(std))]\n\n#[cfg(feature = \"std\")]\nextern crate std;\n\n// Core modules\npub mod error;\npub mod types;\npub mod utils;\n\n// Re-exports\npub use error::Error;\n```\n4. Create minimal implementations of the declared modules\n5. Add unit tests with conditional compilation for std/no_std environments\n6. Test with both `cargo test --features=\"std\"` and `cargo build --no-default-features`",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 3,
+          "title": "Configure Protocol, Security, and Platform Crates",
+          "description": "Set up the remaining crates in the workspace with appropriate dependencies and cross-crate relationships.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create the netxduo-protocols crate:\n   - Create directory and Cargo.toml with dependencies on netxduo-core\n   - Set up module structure for TCP, UDP, IP, etc.\n   - Configure no_std support similar to core crate\n\n2. Create the netxduo-security crate:\n   - Create directory and Cargo.toml with dependencies on netxduo-core\n   - Set up module structure for TLS, encryption, etc.\n   - Add optional dependencies on crypto libraries with feature flags\n\n3. Create the netxduo-platform crate:\n   - Create directory and Cargo.toml with dependencies on all other crates\n   - Set up HAL (Hardware Abstraction Layer) traits\n   - Create module structure for different platform implementations\n\n4. For each crate, implement the following pattern in lib.rs:\n```rust\n#![no_std]\n#![cfg_attr(feature = \"std\", feature(std))]\n\n#[cfg(feature = \"std\")]\nextern crate std;\n\n// Module declarations\n// ...\n\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn it_works() {\n        assert_eq!(2 + 2, 4);\n    }\n}\n```\n\n5. Ensure consistent feature propagation across crates\n6. Test the workspace build with `cargo build --workspace`",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 4,
+          "title": "Set Up Cross-Compilation Build Scripts",
+          "description": "Configure build scripts and toolchain settings to support cross-compilation to embedded targets.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "1. Create a `.cargo/config.toml` file with target configurations:\n```toml\n[build]\ntarget = \"thumbv7em-none-eabihf\" # Default target for ARM Cortex-M4F\n\n[target.thumbv7em-none-eabihf]\nrustflags = [\n  \"-C\", \"link-arg=-Tlink.x\",\n]\n\n[target.thumbv7m-none-eabi]\nrustflags = [\n  \"-C\", \"link-arg=-Tlink.x\",\n]\n```\n\n2. Add build.rs scripts to crates that need platform-specific compilation:\n```rust\nfn main() {\n    // Detect target architecture\n    let target = std::env::var(\"TARGET\").unwrap_or_default();\n    \n    // Set up conditional compilation based on target\n    if target.contains(\"thumb\") {\n        println!(\"cargo:rustc-cfg=cortex_m\");\n    }\n    \n    // Re-run if build script changes\n    println!(\"cargo:rerun-if-changed=build.rs\");\n}\n```\n\n3. Create a `cross-compile.sh` script to simplify cross-compilation:\n```bash\n#!/bin/bash\nset -e\n\n# Default to Cortex-M4F if no target specified\nTARGET=${1:-thumbv7em-none-eabihf}\n\n# Install target if needed\nrustup target add $TARGET\n\n# Build for target\ncargo build --target $TARGET $2\n```\n\n4. Add cross-compilation instructions to README.md\n5. Test cross-compilation with `./cross-compile.sh thumbv7em-none-eabihf`",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 5,
+          "title": "Implement Example and Testing Infrastructure",
+          "description": "Set up examples, integration tests, and documentation to demonstrate usage and verify functionality.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "1. Create an examples directory in each crate:\n```bash\nmkdir -p netxduo-core/examples\nmkdir -p netxduo-protocols/examples\nmkdir -p netxduo-platform/examples\n```\n\n2. Add a simple example to each crate, e.g., for netxduo-core/examples/basic.rs:\n```rust\n#![cfg_attr(not(feature = \"std\"), no_std)]\n#![cfg_attr(not(feature = \"std\"), no_main)]\n\n#[cfg(not(feature = \"std\"))]\nuse panic_halt as _;\n\nuse netxduo_core::types::*;\n\n#[cfg_attr(not(feature = \"std\"), cortex_m_rt::entry)]\nfn main() -> ! {\n    // Basic initialization example\n    // ...\n    \n    #[cfg(feature = \"std\")]\n    println!(\"NetXDuo core initialized\");\n    \n    #[cfg(not(feature = \"std\"))]\n    loop {}\n    \n    #[cfg(feature = \"std\")]\n    std::process::exit(0);\n}\n```\n\n3. Create integration tests in the workspace root:\n```bash\nmkdir -p tests\ntouch tests/integration_test.rs\n```\n\n4. Set up documentation generation:\n   - Add doc comments to public APIs\n   - Create a docs directory with additional documentation\n   - Add a script to generate and serve documentation\n\n5. Create a Makefile or just.json file to simplify common tasks:\n```makefile\n.PHONY: build test docs clean\n\nbuild:\n\tcargo build --workspace\n\ntest:\n\tcargo test --workspace --features=\"std\"\n\ndocs:\n\tcargo doc --workspace --no-deps --open\n\nclean:\n\tcargo clean\n```\n\n6. Test the entire infrastructure with:\n   - `make build`\n   - `make test`\n   - `make docs`",
+          "status": "pending",
+          "parentTaskId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Core Data Structures and Memory Management",
+      "description": "Implement fundamental data structures and memory management components required by the network stack.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Create packet representation with appropriate buffer management. Implement network buffer pool allocation with configurable sizes. Design thread-safe buffer management with zero-copy capabilities where possible. Create data structures for network addresses (IPv4/IPv6), MAC addresses, and protocol identifiers. Implement packet queues and linked lists optimized for embedded environments. Use Rust's ownership model to prevent memory leaks and use-after-free errors.",
+      "testStrategy": "Unit tests for all data structures. Memory allocation/deallocation tests. Stress tests for buffer pools under high load. Test thread safety with concurrent access patterns.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Network Buffer Pool with Zero-Copy Capabilities",
+          "description": "Create a memory pool system for network buffers with configurable sizes that minimizes allocation overhead and supports zero-copy operations where possible.",
+          "dependencies": [],
+          "details": "1. Design a Buffer struct with metadata header and data section aligned to cache lines\n2. Implement a slab-based memory allocator with pre-allocated pools of fixed-size buffers (e.g., 64, 128, 256, 1500 bytes)\n3. Create buffer acquisition and release functions with reference counting for shared buffer ownership\n4. Implement thread-safe operations using atomic operations from Rust's std::sync::atomic\n5. Add support for zero-copy operations by allowing buffer slicing without data duplication\n6. Include buffer statistics tracking (allocations, frees, utilization)\n7. Test with concurrent allocation/deallocation patterns and verify no memory leaks using Rust's ownership model",
+          "status": "pending",
+          "parentTaskId": 2
+        },
+        {
+          "id": 2,
+          "title": "Design Network Address Data Structures",
+          "description": "Create efficient data structures for representing and manipulating network addresses including IPv4, IPv6, MAC addresses, and protocol identifiers.",
+          "dependencies": [],
+          "details": "1. Implement MAC address structure with appropriate byte alignment and comparison methods\n2. Create IPv4Address and IPv6Address structs with proper alignment and methods for parsing, formatting, and subnet operations\n3. Design a unified NetworkAddress enum that can represent either address type efficiently\n4. Implement protocol identifier enums and constants (Ethernet types, IP protocols, etc.)\n5. Add serialization/deserialization methods for all address types\n6. Implement hash and equality traits for use in hash tables\n7. Test with various address formats, edge cases, and verify memory efficiency",
+          "status": "pending",
+          "parentTaskId": 2
+        },
+        {
+          "id": 3,
+          "title": "Implement Packet Representation with Buffer Management",
+          "description": "Create a packet abstraction that efficiently represents network packets with header access methods and leverages the buffer pool for memory management.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Design a Packet struct that references a buffer from the pool implemented in subtask 1\n2. Implement methods to access and modify packet headers at different protocol layers\n3. Create packet metadata structure (timestamp, interface info, etc.)\n4. Add support for packet chaining for reassembly operations\n5. Implement Copy-on-Write semantics for packet modification to maintain zero-copy benefits\n6. Create packet construction helpers (for common protocols)\n7. Test with various packet types, ensuring proper buffer reference counting and no memory leaks",
+          "status": "pending",
+          "parentTaskId": 2
+        },
+        {
+          "id": 4,
+          "title": "Create Thread-Safe Packet Queues",
+          "description": "Implement high-performance, thread-safe packet queues optimized for embedded environments that can be used for transmit, receive, and processing operations.",
+          "dependencies": [
+            1,
+            3
+          ],
+          "details": "1. Design a lock-free packet queue using atomic operations\n2. Implement bounded and unbounded queue variants with configurable sizes\n3. Create enqueue, dequeue, and peek operations with timeout options\n4. Add support for priority queues for QoS implementations\n5. Implement queue statistics (length, drops, average wait time)\n6. Create batch operations for improved performance (enqueue_batch, dequeue_batch)\n7. Test with multiple producer/consumer scenarios, measuring throughput and latency under various loads",
+          "status": "pending",
+          "parentTaskId": 2
+        },
+        {
+          "id": 5,
+          "title": "Implement Optimized Linked Lists for Network Management",
+          "description": "Create specialized linked list implementations optimized for network stack requirements such as connection tracking, timer management, and event handling.",
+          "dependencies": [
+            1,
+            3
+          ],
+          "details": "1. Design an intrusive linked list implementation to minimize memory allocations\n2. Create specialized list types for common use cases (connection tracking, timer management)\n3. Implement thread-safe operations using fine-grained locking or lock-free techniques\n4. Add iterator support with safe concurrent iteration capabilities\n5. Create methods for efficient insertion, removal, and searching\n6. Implement time-based operations for timer lists (e.g., expire_timers())\n7. Test with concurrent access patterns and verify memory safety using Rust's ownership model",
+          "status": "pending",
+          "parentTaskId": 2
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Network Interface Abstraction",
+      "description": "Create a hardware abstraction layer for network interfaces with traits defining the interface between the IP stack and hardware drivers.",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Define NetworkInterface trait with methods for sending/receiving packets, getting/setting MAC address, and managing interface state. Implement a generic Ethernet interface. Create driver registration mechanism. Support multiple concurrent interfaces. Implement interface statistics collection. Create loopback interface for testing. Use Rust traits to define clear boundaries between hardware and software components.",
+      "testStrategy": "Unit tests with mock network interfaces. Test interface registration and management. Verify packet transmission and reception through the abstraction layer using test doubles.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define NetworkInterface Trait with Core Methods",
+          "description": "Create the foundational NetworkInterface trait that defines the contract between the IP stack and hardware drivers. Include essential methods for packet transmission/reception, MAC address management, and interface state control.",
+          "dependencies": [],
+          "details": "1. Define a NetworkInterface trait with the following methods:\n   - `init()`: Initialize the interface\n   - `send_packet()`: Send a packet through the interface\n   - `receive_packet()`: Receive a packet from the interface\n   - `get_mac_address()`: Retrieve the interface's MAC address\n   - `set_mac_address()`: Set the interface's MAC address\n   - `is_up()`: Check if the interface is up\n   - `set_up()`: Bring the interface up or down\n   - `set_promiscuous_mode()`: Enable/disable promiscuous mode\n\n2. Define appropriate error types for network operations using a NetworkError enum\n\n3. Include documentation for each method explaining its purpose, parameters, and return values\n\n4. Create unit tests for validating trait implementations\n\n5. Implement a mock interface for testing that implements the NetworkInterface trait\n\nTesting approach: Create unit tests that verify the trait's contract is properly defined and that mock implementations correctly follow the trait's requirements.",
+          "status": "pending",
+          "parentTaskId": 3
+        },
+        {
+          "id": 2,
+          "title": "Implement Interface Statistics Collection",
+          "description": "Extend the NetworkInterface trait to include statistics collection capabilities. Create structures for storing and retrieving interface performance metrics.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Define an InterfaceStatistics struct with the following fields:\n   - `packets_sent`: Counter for sent packets\n   - `packets_received`: Counter for received packets\n   - `bytes_sent`: Counter for sent bytes\n   - `bytes_received`: Counter for received bytes\n   - `errors_in`: Counter for receive errors\n   - `errors_out`: Counter for transmit errors\n   - `collisions`: Counter for packet collisions\n   - `dropped_packets`: Counter for dropped packets\n   - `timestamp`: Last update timestamp\n\n2. Add a `get_statistics()` method to the NetworkInterface trait\n\n3. Implement helper methods for statistics:\n   - `reset_statistics()`: Reset all counters\n   - `update_statistics()`: Update statistics from hardware\n   - `calculate_throughput()`: Calculate current throughput\n\n4. Create threshold-based alert generation for monitoring interface health\n\n5. Update the mock interface to track and report statistics\n\nTesting approach: Create tests that verify statistics are properly collected, updated, and reported. Include tests for threshold-based alerts and throughput calculations.",
+          "status": "pending",
+          "parentTaskId": 3
+        },
+        {
+          "id": 3,
+          "title": "Create Network Interface Registry and Factory",
+          "description": "Implement a registry system that allows dynamic registration and management of network interfaces. Use a factory pattern to create interface instances based on configuration.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create a NetworkInterfaceRegistry struct that maintains a collection of registered interfaces:\n   - Implement `register_interface()` to add interfaces to the registry\n   - Implement `unregister_interface()` to remove interfaces\n   - Implement `get_interface()` to retrieve interfaces by name or ID\n   - Implement `get_all_interfaces()` to list all registered interfaces\n\n2. Implement a NetworkInterfaceFactory trait:\n   - Define `create_interface()` method that takes configuration parameters\n   - Define `get_supported_types()` to list supported interface types\n\n3. Create a driver registration mechanism:\n   - Implement `register_driver_factory()` to register driver factories\n   - Implement `create_interface_from_config()` to instantiate interfaces\n\n4. Implement thread-safe access to the registry using appropriate synchronization primitives\n\n5. Add methods for querying interface capabilities\n\nTesting approach: Create tests that verify interfaces can be registered, unregistered, and retrieved correctly. Test the factory pattern with different configurations and verify thread safety with concurrent access tests.",
+          "status": "pending",
+          "parentTaskId": 3
+        },
+        {
+          "id": 4,
+          "title": "Implement Generic Ethernet Interface",
+          "description": "Create a generic Ethernet interface implementation that can be used as a base for specific Ethernet hardware drivers. Include common Ethernet functionality and hardware abstraction.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create an EthernetInterface struct that implements the NetworkInterface trait:\n   - Implement common Ethernet frame handling logic\n   - Support standard Ethernet frame formats\n   - Handle MAC address filtering\n   - Implement ARP protocol support\n   - Support for MTU configuration\n\n2. Create an EthernetDriverInterface trait that hardware-specific drivers must implement:\n   - Define low-level hardware access methods\n   - Define interrupt handling mechanisms\n   - Define DMA buffer management\n\n3. Implement Ethernet-specific statistics:\n   - Track frame types (unicast, multicast, broadcast)\n   - Monitor CRC errors and frame alignment errors\n   - Track PAUSE frame handling\n\n4. Add support for Ethernet link state detection and speed negotiation\n\n5. Implement power management features (WoL, energy-efficient Ethernet)\n\nTesting approach: Create tests for Ethernet frame handling, MAC address filtering, and protocol support. Test with different frame types and sizes. Verify proper handling of error conditions and edge cases.",
+          "status": "pending",
+          "parentTaskId": 3
+        },
+        {
+          "id": 5,
+          "title": "Implement Loopback Interface for Testing",
+          "description": "Create a loopback interface implementation that can be used for testing the IP stack without physical hardware. Ensure it provides realistic behavior for development and testing purposes.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "1. Implement a LoopbackInterface struct that implements the NetworkInterface trait:\n   - Create an internal packet queue for looped-back packets\n   - Implement `send_packet()` to store packets in the queue\n   - Implement `receive_packet()` to retrieve packets from the queue\n   - Use a configurable MAC address (default to a reserved loopback address)\n   - Simulate realistic timing and behavior\n\n2. Add configuration options for the loopback interface:\n   - Configurable packet delay\n   - Simulated packet loss rate\n   - Bandwidth limitation\n   - MTU settings\n\n3. Implement realistic statistics tracking:\n   - Count packets and bytes through the interface\n   - Track queue utilization and drops\n\n4. Add support for multiple concurrent loopback interfaces\n\n5. Implement integration with the interface registry from subtask 3\n\nTesting approach: Create comprehensive tests that verify the loopback interface correctly loops back packets. Test with various packet sizes, delays, and loss rates. Verify correct behavior under high load and edge conditions. Test integration with the IP stack to ensure proper functionality.",
+          "status": "pending",
+          "parentTaskId": 3
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "IPv4 Protocol Implementation",
+      "description": "Implement the core IPv4 protocol functionality including packet creation, parsing, routing, and fragmentation.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        3
+      ],
+      "priority": "high",
+      "details": "Implement IPv4 header parsing and creation. Support IP fragmentation and reassembly. Implement IP routing table and lookup algorithms. Add support for IP options. Create IPv4 address management including subnet calculations. Implement checksum verification and generation. Support for TTL management. Ensure RFC compliance for all implemented features.",
+      "testStrategy": "Unit tests for header parsing/creation. Test fragmentation and reassembly with various packet sizes. Verify routing logic with complex routing tables. Test against RFC compliance test cases. Benchmark performance against C implementation."
+    },
+    {
+      "id": 5,
+      "title": "IPv6 Protocol Implementation",
+      "description": "Implement the core IPv6 protocol functionality including packet handling, extension headers, and addressing.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        3
+      ],
+      "priority": "high",
+      "details": "Implement IPv6 header parsing and creation. Support for IPv6 extension headers. Implement IPv6 address management including SLAAC. Create Neighbor Discovery Protocol implementation. Support for IPv6 routing and route selection. Implement packet fragmentation for IPv6. Ensure compliance with relevant RFCs. Create dual-stack support to work alongside IPv4.",
+      "testStrategy": "Unit tests for header parsing/creation. Test extension header handling. Verify address management and neighbor discovery. Test routing with mixed IPv4/IPv6 networks. Validate against RFC compliance test cases."
+    },
+    {
+      "id": 6,
+      "title": "ARP Protocol Implementation",
+      "description": "Implement the Address Resolution Protocol (ARP) for IPv4 address to MAC address resolution.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        4
+      ],
+      "priority": "medium",
+      "details": "Implement ARP cache with configurable timeout. Create ARP request/response packet handling. Support for gratuitous ARP. Implement ARP table management with aging. Create API for manual ARP entry management. Optimize for embedded systems with limited memory. Implement RARP (Reverse ARP) functionality.",
+      "testStrategy": "Unit tests for ARP packet creation and parsing. Test ARP cache management with timeouts. Verify address resolution process. Test integration with IPv4 stack. Simulate network scenarios with ARP conflicts."
+    },
+    {
+      "id": 7,
+      "title": "ICMP and ICMPv6 Implementation",
+      "description": "Implement Internet Control Message Protocol for both IPv4 and IPv6 to support error reporting and diagnostic functions.",
+      "status": "pending",
+      "dependencies": [
+        4,
+        5
+      ],
+      "priority": "medium",
+      "details": "Implement ICMP message types (echo, destination unreachable, redirect, etc.). Create ICMPv6 implementation including Neighbor Discovery. Support for Path MTU Discovery. Implement error handling and reporting. Create ping functionality for both protocols. Ensure proper integration with IPv4 and IPv6 stacks. Implement rate limiting for ICMP responses to prevent DoS attacks.",
+      "testStrategy": "Unit tests for ICMP message creation and parsing. Test ping functionality. Verify error reporting scenarios. Test Neighbor Discovery for IPv6. Validate against RFC compliance test cases."
+    },
+    {
+      "id": 8,
+      "title": "UDP Protocol Implementation",
+      "description": "Implement the User Datagram Protocol (UDP) transport layer with socket interface.",
+      "status": "pending",
+      "dependencies": [
+        4,
+        5,
+        7
+      ],
+      "priority": "high",
+      "details": "Create UDP header parsing and creation. Implement UDP checksum calculation. Create UDP socket abstraction with bind, sendto, and recvfrom operations. Support for IPv4 and IPv6 addresses. Implement socket options (TTL, broadcast, etc.). Create callback mechanism for received packets. Optimize for zero-copy operation where possible. Support for multicast group management.",
+      "testStrategy": "Unit tests for UDP packet handling. Test socket operations with various scenarios. Verify checksum calculation. Test multicast functionality. Benchmark performance against C implementation. Test with real network traffic."
+    },
+    {
+      "id": 9,
+      "title": "TCP Protocol Implementation",
+      "description": "Implement the Transmission Control Protocol (TCP) with connection management, flow control, and reliability features.",
+      "status": "pending",
+      "dependencies": [
+        4,
+        5,
+        7
+      ],
+      "priority": "high",
+      "details": "Implement TCP header parsing and creation. Create TCP state machine for connection management. Implement sequence number tracking and acknowledgment. Support for flow control and congestion control algorithms. Create TCP socket abstraction with listen, accept, connect, send, and recv operations. Implement TCP options handling. Support for keep-alive, delayed ACK, and Nagle's algorithm. Optimize retransmission strategies for embedded environments.",
+      "testStrategy": "Unit tests for TCP packet handling. Test connection establishment and termination. Verify data transmission with various window sizes. Test recovery from packet loss. Benchmark performance against C implementation. Test with real network traffic and challenging network conditions."
+    },
+    {
+      "id": 10,
+      "title": "DHCP Client Implementation",
+      "description": "Implement Dynamic Host Configuration Protocol client for automatic IP address configuration.",
+      "status": "pending",
+      "dependencies": [
+        6,
+        8
+      ],
+      "priority": "medium",
+      "details": "Implement DHCP message formats and state machine. Support for DHCP options processing. Create lease management with renewal and rebinding. Implement timeout handling and retransmission. Support for multiple network interfaces. Create event notification system for address changes. Implement fallback to static configuration when DHCP fails. Support for both IPv4 and IPv6 (DHCPv6).",
+      "testStrategy": "Unit tests for DHCP message parsing and creation. Test state machine with various server responses. Verify lease management and renewal. Test timeout and retry mechanisms. Test with real DHCP servers in controlled environments."
+    },
+    {
+      "id": 11,
+      "title": "DNS Client Implementation",
+      "description": "Implement Domain Name System client for hostname resolution to IP addresses.",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "medium",
+      "details": "Implement DNS message formats and parsing. Create query generation for A, AAAA, MX, and other record types. Support for recursive and iterative queries. Implement DNS cache with TTL handling. Create API for synchronous and asynchronous resolution. Support for multiple DNS servers with fallback. Implement DNSSEC validation (optional). Support for both IPv4 and IPv6 DNS servers.",
+      "testStrategy": "Unit tests for DNS message parsing and creation. Test hostname resolution with various record types. Verify cache behavior with TTL expiration. Test fallback between multiple DNS servers. Test with real DNS servers and various domain types."
+    },
+    {
+      "id": 12,
+      "title": "TLS/DTLS Security Implementation",
+      "description": "Implement Transport Layer Security and Datagram TLS for secure communications.",
+      "status": "pending",
+      "dependencies": [
+        8,
+        9
+      ],
+      "priority": "high",
+      "details": "Integrate with existing Rust cryptographic libraries (e.g., rustls, ring). Implement TLS handshake protocol. Create certificate validation and management. Support for TLS 1.2 and 1.3. Implement DTLS for securing UDP communications. Create secure socket abstraction that wraps TCP/UDP sockets. Support for various cipher suites with focus on embedded-friendly options. Implement session resumption for efficiency.",
+      "testStrategy": "Unit tests for TLS handshake and record protocols. Test certificate validation. Verify secure data transmission. Test against standard TLS servers. Perform security validation including testing against known vulnerabilities. Benchmark performance impact compared to unsecured connections."
+    },
+    {
+      "id": 13,
+      "title": "HTTP Client and Server Implementation",
+      "description": "Implement HTTP/HTTPS protocol for web communication with both client and server capabilities.",
+      "status": "pending",
+      "dependencies": [
+        9,
+        12
+      ],
+      "priority": "medium",
+      "details": "Implement HTTP request and response parsing. Create HTTP client with support for GET, POST, PUT, DELETE methods. Implement HTTP server with routing capabilities. Support for headers, cookies, and content negotiation. Create chunked transfer encoding support. Implement HTTP/1.1 persistent connections. Add HTTPS support using the TLS implementation. Create API for both blocking and non-blocking operations. Optimize for embedded environments with limited resources.",
+      "testStrategy": "Unit tests for HTTP message parsing and creation. Test client against various web servers. Test server with different client requests. Verify HTTPS functionality. Benchmark performance for both client and server operations. Test with real-world HTTP traffic patterns."
+    },
+    {
+      "id": 14,
+      "title": "MQTT Client Implementation",
+      "description": "Implement Message Queuing Telemetry Transport protocol client for IoT messaging.",
+      "status": "pending",
+      "dependencies": [
+        9,
+        12
+      ],
+      "priority": "medium",
+      "details": "Implement MQTT packet formats for all message types. Create MQTT client with connect, publish, subscribe, and unsubscribe operations. Support for QoS levels 0, 1, and 2. Implement topic filtering and matching. Create persistent session handling. Support for will messages and retained messages. Implement keep-alive and ping mechanism. Add TLS support for secure MQTT (MQTTS). Create event-driven API for message handling.",
+      "testStrategy": "Unit tests for MQTT packet parsing and creation. Test connection management with various broker responses. Verify QoS guarantees for message delivery. Test subscription and message filtering. Test against popular MQTT brokers. Benchmark performance with various message rates and sizes."
+    },
+    {
+      "id": 15,
+      "title": "Comprehensive Testing and Documentation",
+      "description": "Develop comprehensive test suite, benchmarks, and documentation for the entire NetXDuo Rust port.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "priority": "high",
+      "details": "Create integration tests covering all protocol interactions. Implement conformance tests against protocol specifications. Develop performance benchmarks comparing against C implementation. Create fuzz testing for security-critical components. Write comprehensive API documentation with examples. Create tutorials for common use cases. Implement CI/CD pipeline for automated testing. Write porting guides for existing NetXDuo users. Create example applications demonstrating key features. Document all unsafe code blocks with safety justifications.",
+      "testStrategy": "Verify documentation accuracy and completeness. Run all test suites on multiple platforms. Validate benchmark methodology. Review by external testers for usability of documentation and examples. Ensure CI/CD pipeline correctly catches regressions."
+    }
+  ],
+  "metadata": {
+    "projectName": "NetXDuo Rust Port",
+    "totalTasks": 15,
+    "sourceFile": "/Users/dohyunjung/Workspace/roboco-io/netxduo/scripts/prd.txt",
+    "generatedAt": "2023-11-13"
+  }
+}

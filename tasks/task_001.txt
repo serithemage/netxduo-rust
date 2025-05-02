@@ -1,0 +1,254 @@
+# Task ID: 1
+# Title: Project Setup and Repository Structure
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Set up the project repository with appropriate crate structure, dependencies, and build configuration for the NetXDuo Rust port.
+# Details:
+Create a new Rust workspace with multiple crates: core, protocols, security, and platform. Configure Cargo.toml files with appropriate dependencies. Set up no_std support with optional std features. Configure build scripts for cross-compilation to embedded targets. Add initial documentation structure including README, CONTRIBUTING, and LICENSE files. Set up directory structure that mirrors the logical components of NetXDuo.
+
+# Test Strategy:
+Verify that the project builds successfully with both std and no_std configurations. Test cross-compilation for at least one embedded target platform.
+
+# Subtasks:
+## 1. Create Workspace Structure and Base Configuration [pending]
+### Dependencies: None
+### Description: Initialize the Rust workspace with the core directory structure and base configuration files to establish the foundation for the NetXDuo port.
+### Details:
+1. Create a new directory for the project (e.g., `netxduo-rust`)
+2. Initialize a Git repository with `git init`
+3. Create a root `Cargo.toml` with workspace configuration:
+```toml
+[workspace]
+members = [
+  "netxduo-core",
+  "netxduo-protocols",
+  "netxduo-security",
+  "netxduo-platform"
+]
+resolver = "2"
+```
+4. Add documentation files:
+   - README.md with project overview, goals, and getting started guide
+   - CONTRIBUTING.md with contribution guidelines
+   - LICENSE file (likely MIT or Apache 2.0)
+   - CHANGELOG.md for version history
+5. Create a `.gitignore` file with Rust-specific entries
+6. Set up initial GitHub Actions workflow for CI in `.github/workflows/`
+7. Test by running `cargo build` to verify workspace configuration
+
+## 2. Set Up Core Crate with no_std Support [pending]
+### Dependencies: 1.1
+### Description: Create the netxduo-core crate with no_std configuration and optional std features to support both embedded and standard environments.
+### Details:
+1. Create the netxduo-core directory and initialize the crate:
+```bash
+mkdir -p netxduo-core/src
+touch netxduo-core/src/lib.rs
+```
+2. Configure netxduo-core/Cargo.toml with no_std support:
+```toml
+[package]
+name = "netxduo-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Core functionality for NetXDuo Rust port"
+
+[features]
+default = []
+std = []
+
+[dependencies]
+log = { version = "0.4", default-features = false }
+heapless = "0.8"
+
+[dev-dependencies]
+criterion = { version = "0.5", optional = true }
+```
+3. Set up the lib.rs file with no_std attribute and feature gates:
+```rust
+#![no_std]
+#![cfg_attr(feature = "std", feature(std))]
+
+#[cfg(feature = "std")]
+extern crate std;
+
+// Core modules
+pub mod error;
+pub mod types;
+pub mod utils;
+
+// Re-exports
+pub use error::Error;
+```
+4. Create minimal implementations of the declared modules
+5. Add unit tests with conditional compilation for std/no_std environments
+6. Test with both `cargo test --features="std"` and `cargo build --no-default-features`
+
+## 3. Configure Protocol, Security, and Platform Crates [pending]
+### Dependencies: 1.1, 1.2
+### Description: Set up the remaining crates in the workspace with appropriate dependencies and cross-crate relationships.
+### Details:
+1. Create the netxduo-protocols crate:
+   - Create directory and Cargo.toml with dependencies on netxduo-core
+   - Set up module structure for TCP, UDP, IP, etc.
+   - Configure no_std support similar to core crate
+
+2. Create the netxduo-security crate:
+   - Create directory and Cargo.toml with dependencies on netxduo-core
+   - Set up module structure for TLS, encryption, etc.
+   - Add optional dependencies on crypto libraries with feature flags
+
+3. Create the netxduo-platform crate:
+   - Create directory and Cargo.toml with dependencies on all other crates
+   - Set up HAL (Hardware Abstraction Layer) traits
+   - Create module structure for different platform implementations
+
+4. For each crate, implement the following pattern in lib.rs:
+```rust
+#![no_std]
+#![cfg_attr(feature = "std", feature(std))]
+
+#[cfg(feature = "std")]
+extern crate std;
+
+// Module declarations
+// ...
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}
+```
+
+5. Ensure consistent feature propagation across crates
+6. Test the workspace build with `cargo build --workspace`
+
+## 4. Set Up Cross-Compilation Build Scripts [pending]
+### Dependencies: 1.1, 1.2, 1.3
+### Description: Configure build scripts and toolchain settings to support cross-compilation to embedded targets.
+### Details:
+1. Create a `.cargo/config.toml` file with target configurations:
+```toml
+[build]
+target = "thumbv7em-none-eabihf" # Default target for ARM Cortex-M4F
+
+[target.thumbv7em-none-eabihf]
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+]
+
+[target.thumbv7m-none-eabi]
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+]
+```
+
+2. Add build.rs scripts to crates that need platform-specific compilation:
+```rust
+fn main() {
+    // Detect target architecture
+    let target = std::env::var("TARGET").unwrap_or_default();
+    
+    // Set up conditional compilation based on target
+    if target.contains("thumb") {
+        println!("cargo:rustc-cfg=cortex_m");
+    }
+    
+    // Re-run if build script changes
+    println!("cargo:rerun-if-changed=build.rs");
+}
+```
+
+3. Create a `cross-compile.sh` script to simplify cross-compilation:
+```bash
+#!/bin/bash
+set -e
+
+# Default to Cortex-M4F if no target specified
+TARGET=${1:-thumbv7em-none-eabihf}
+
+# Install target if needed
+rustup target add $TARGET
+
+# Build for target
+cargo build --target $TARGET $2
+```
+
+4. Add cross-compilation instructions to README.md
+5. Test cross-compilation with `./cross-compile.sh thumbv7em-none-eabihf`
+
+## 5. Implement Example and Testing Infrastructure [pending]
+### Dependencies: 1.1, 1.2, 1.3, 1.4
+### Description: Set up examples, integration tests, and documentation to demonstrate usage and verify functionality.
+### Details:
+1. Create an examples directory in each crate:
+```bash
+mkdir -p netxduo-core/examples
+mkdir -p netxduo-protocols/examples
+mkdir -p netxduo-platform/examples
+```
+
+2. Add a simple example to each crate, e.g., for netxduo-core/examples/basic.rs:
+```rust
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_main)]
+
+#[cfg(not(feature = "std"))]
+use panic_halt as _;
+
+use netxduo_core::types::*;
+
+#[cfg_attr(not(feature = "std"), cortex_m_rt::entry)]
+fn main() -> ! {
+    // Basic initialization example
+    // ...
+    
+    #[cfg(feature = "std")]
+    println!("NetXDuo core initialized");
+    
+    #[cfg(not(feature = "std"))]
+    loop {}
+    
+    #[cfg(feature = "std")]
+    std::process::exit(0);
+}
+```
+
+3. Create integration tests in the workspace root:
+```bash
+mkdir -p tests
+touch tests/integration_test.rs
+```
+
+4. Set up documentation generation:
+   - Add doc comments to public APIs
+   - Create a docs directory with additional documentation
+   - Add a script to generate and serve documentation
+
+5. Create a Makefile or just.json file to simplify common tasks:
+```makefile
+.PHONY: build test docs clean
+
+build:
+	cargo build --workspace
+
+test:
+	cargo test --workspace --features="std"
+
+docs:
+	cargo doc --workspace --no-deps --open
+
+clean:
+	cargo clean
+```
+
+6. Test the entire infrastructure with:
+   - `make build`
+   - `make test`
+   - `make docs`
+

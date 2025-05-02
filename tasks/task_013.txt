@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: HTTP Client and Server Implementation
+# Status: pending
+# Dependencies: 9, 12
+# Priority: medium
+# Description: Implement HTTP/HTTPS protocol for web communication with both client and server capabilities.
+# Details:
+Implement HTTP request and response parsing. Create HTTP client with support for GET, POST, PUT, DELETE methods. Implement HTTP server with routing capabilities. Support for headers, cookies, and content negotiation. Create chunked transfer encoding support. Implement HTTP/1.1 persistent connections. Add HTTPS support using the TLS implementation. Create API for both blocking and non-blocking operations. Optimize for embedded environments with limited resources.
+
+# Test Strategy:
+Unit tests for HTTP message parsing and creation. Test client against various web servers. Test server with different client requests. Verify HTTPS functionality. Benchmark performance for both client and server operations. Test with real-world HTTP traffic patterns.

@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: IPv4 Protocol Implementation
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Implement the core IPv4 protocol functionality including packet creation, parsing, routing, and fragmentation.
+# Details:
+Implement IPv4 header parsing and creation. Support IP fragmentation and reassembly. Implement IP routing table and lookup algorithms. Add support for IP options. Create IPv4 address management including subnet calculations. Implement checksum verification and generation. Support for TTL management. Ensure RFC compliance for all implemented features.
+
+# Test Strategy:
+Unit tests for header parsing/creation. Test fragmentation and reassembly with various packet sizes. Verify routing logic with complex routing tables. Test against RFC compliance test cases. Benchmark performance against C implementation.

@@ -1,0 +1,73 @@
+# Task ID: 2
+# Title: Core Data Structures and Memory Management
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Implement fundamental data structures and memory management components required by the network stack.
+# Details:
+Create packet representation with appropriate buffer management. Implement network buffer pool allocation with configurable sizes. Design thread-safe buffer management with zero-copy capabilities where possible. Create data structures for network addresses (IPv4/IPv6), MAC addresses, and protocol identifiers. Implement packet queues and linked lists optimized for embedded environments. Use Rust's ownership model to prevent memory leaks and use-after-free errors.
+
+# Test Strategy:
+Unit tests for all data structures. Memory allocation/deallocation tests. Stress tests for buffer pools under high load. Test thread safety with concurrent access patterns.
+
+# Subtasks:
+## 1. Implement Network Buffer Pool with Zero-Copy Capabilities [pending]
+### Dependencies: None
+### Description: Create a memory pool system for network buffers with configurable sizes that minimizes allocation overhead and supports zero-copy operations where possible.
+### Details:
+1. Design a Buffer struct with metadata header and data section aligned to cache lines
+2. Implement a slab-based memory allocator with pre-allocated pools of fixed-size buffers (e.g., 64, 128, 256, 1500 bytes)
+3. Create buffer acquisition and release functions with reference counting for shared buffer ownership
+4. Implement thread-safe operations using atomic operations from Rust's std::sync::atomic
+5. Add support for zero-copy operations by allowing buffer slicing without data duplication
+6. Include buffer statistics tracking (allocations, frees, utilization)
+7. Test with concurrent allocation/deallocation patterns and verify no memory leaks using Rust's ownership model
+
+## 2. Design Network Address Data Structures [pending]
+### Dependencies: None
+### Description: Create efficient data structures for representing and manipulating network addresses including IPv4, IPv6, MAC addresses, and protocol identifiers.
+### Details:
+1. Implement MAC address structure with appropriate byte alignment and comparison methods
+2. Create IPv4Address and IPv6Address structs with proper alignment and methods for parsing, formatting, and subnet operations
+3. Design a unified NetworkAddress enum that can represent either address type efficiently
+4. Implement protocol identifier enums and constants (Ethernet types, IP protocols, etc.)
+5. Add serialization/deserialization methods for all address types
+6. Implement hash and equality traits for use in hash tables
+7. Test with various address formats, edge cases, and verify memory efficiency
+
+## 3. Implement Packet Representation with Buffer Management [pending]
+### Dependencies: 2.1
+### Description: Create a packet abstraction that efficiently represents network packets with header access methods and leverages the buffer pool for memory management.
+### Details:
+1. Design a Packet struct that references a buffer from the pool implemented in subtask 1
+2. Implement methods to access and modify packet headers at different protocol layers
+3. Create packet metadata structure (timestamp, interface info, etc.)
+4. Add support for packet chaining for reassembly operations
+5. Implement Copy-on-Write semantics for packet modification to maintain zero-copy benefits
+6. Create packet construction helpers (for common protocols)
+7. Test with various packet types, ensuring proper buffer reference counting and no memory leaks
+
+## 4. Create Thread-Safe Packet Queues [pending]
+### Dependencies: 2.1, 2.3
+### Description: Implement high-performance, thread-safe packet queues optimized for embedded environments that can be used for transmit, receive, and processing operations.
+### Details:
+1. Design a lock-free packet queue using atomic operations
+2. Implement bounded and unbounded queue variants with configurable sizes
+3. Create enqueue, dequeue, and peek operations with timeout options
+4. Add support for priority queues for QoS implementations
+5. Implement queue statistics (length, drops, average wait time)
+6. Create batch operations for improved performance (enqueue_batch, dequeue_batch)
+7. Test with multiple producer/consumer scenarios, measuring throughput and latency under various loads
+
+## 5. Implement Optimized Linked Lists for Network Management [pending]
+### Dependencies: 2.1, 2.3
+### Description: Create specialized linked list implementations optimized for network stack requirements such as connection tracking, timer management, and event handling.
+### Details:
+1. Design an intrusive linked list implementation to minimize memory allocations
+2. Create specialized list types for common use cases (connection tracking, timer management)
+3. Implement thread-safe operations using fine-grained locking or lock-free techniques
+4. Add iterator support with safe concurrent iteration capabilities
+5. Create methods for efficient insertion, removal, and searching
+6. Implement time-based operations for timer lists (e.g., expire_timers())
+7. Test with concurrent access patterns and verify memory safety using Rust's ownership model
+

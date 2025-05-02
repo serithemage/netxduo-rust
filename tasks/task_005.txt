@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: IPv6 Protocol Implementation
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Implement the core IPv6 protocol functionality including packet handling, extension headers, and addressing.
+# Details:
+Implement IPv6 header parsing and creation. Support for IPv6 extension headers. Implement IPv6 address management including SLAAC. Create Neighbor Discovery Protocol implementation. Support for IPv6 routing and route selection. Implement packet fragmentation for IPv6. Ensure compliance with relevant RFCs. Create dual-stack support to work alongside IPv4.
+
+# Test Strategy:
+Unit tests for header parsing/creation. Test extension header handling. Verify address management and neighbor discovery. Test routing with mixed IPv4/IPv6 networks. Validate against RFC compliance test cases.

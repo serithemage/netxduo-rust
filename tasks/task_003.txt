@@ -1,0 +1,143 @@
+# Task ID: 3
+# Title: Network Interface Abstraction
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create a hardware abstraction layer for network interfaces with traits defining the interface between the IP stack and hardware drivers.
+# Details:
+Define NetworkInterface trait with methods for sending/receiving packets, getting/setting MAC address, and managing interface state. Implement a generic Ethernet interface. Create driver registration mechanism. Support multiple concurrent interfaces. Implement interface statistics collection. Create loopback interface for testing. Use Rust traits to define clear boundaries between hardware and software components.
+
+# Test Strategy:
+Unit tests with mock network interfaces. Test interface registration and management. Verify packet transmission and reception through the abstraction layer using test doubles.
+
+# Subtasks:
+## 1. Define NetworkInterface Trait with Core Methods [pending]
+### Dependencies: None
+### Description: Create the foundational NetworkInterface trait that defines the contract between the IP stack and hardware drivers. Include essential methods for packet transmission/reception, MAC address management, and interface state control.
+### Details:
+1. Define a NetworkInterface trait with the following methods:
+   - `init()`: Initialize the interface
+   - `send_packet()`: Send a packet through the interface
+   - `receive_packet()`: Receive a packet from the interface
+   - `get_mac_address()`: Retrieve the interface's MAC address
+   - `set_mac_address()`: Set the interface's MAC address
+   - `is_up()`: Check if the interface is up
+   - `set_up()`: Bring the interface up or down
+   - `set_promiscuous_mode()`: Enable/disable promiscuous mode
+
+2. Define appropriate error types for network operations using a NetworkError enum
+
+3. Include documentation for each method explaining its purpose, parameters, and return values
+
+4. Create unit tests for validating trait implementations
+
+5. Implement a mock interface for testing that implements the NetworkInterface trait
+
+Testing approach: Create unit tests that verify the trait's contract is properly defined and that mock implementations correctly follow the trait's requirements.
+
+## 2. Implement Interface Statistics Collection [pending]
+### Dependencies: 3.1
+### Description: Extend the NetworkInterface trait to include statistics collection capabilities. Create structures for storing and retrieving interface performance metrics.
+### Details:
+1. Define an InterfaceStatistics struct with the following fields:
+   - `packets_sent`: Counter for sent packets
+   - `packets_received`: Counter for received packets
+   - `bytes_sent`: Counter for sent bytes
+   - `bytes_received`: Counter for received bytes
+   - `errors_in`: Counter for receive errors
+   - `errors_out`: Counter for transmit errors
+   - `collisions`: Counter for packet collisions
+   - `dropped_packets`: Counter for dropped packets
+   - `timestamp`: Last update timestamp
+
+2. Add a `get_statistics()` method to the NetworkInterface trait
+
+3. Implement helper methods for statistics:
+   - `reset_statistics()`: Reset all counters
+   - `update_statistics()`: Update statistics from hardware
+   - `calculate_throughput()`: Calculate current throughput
+
+4. Create threshold-based alert generation for monitoring interface health
+
+5. Update the mock interface to track and report statistics
+
+Testing approach: Create tests that verify statistics are properly collected, updated, and reported. Include tests for threshold-based alerts and throughput calculations.
+
+## 3. Create Network Interface Registry and Factory [pending]
+### Dependencies: 3.1, 3.2
+### Description: Implement a registry system that allows dynamic registration and management of network interfaces. Use a factory pattern to create interface instances based on configuration.
+### Details:
+1. Create a NetworkInterfaceRegistry struct that maintains a collection of registered interfaces:
+   - Implement `register_interface()` to add interfaces to the registry
+   - Implement `unregister_interface()` to remove interfaces
+   - Implement `get_interface()` to retrieve interfaces by name or ID
+   - Implement `get_all_interfaces()` to list all registered interfaces
+
+2. Implement a NetworkInterfaceFactory trait:
+   - Define `create_interface()` method that takes configuration parameters
+   - Define `get_supported_types()` to list supported interface types
+
+3. Create a driver registration mechanism:
+   - Implement `register_driver_factory()` to register driver factories
+   - Implement `create_interface_from_config()` to instantiate interfaces
+
+4. Implement thread-safe access to the registry using appropriate synchronization primitives
+
+5. Add methods for querying interface capabilities
+
+Testing approach: Create tests that verify interfaces can be registered, unregistered, and retrieved correctly. Test the factory pattern with different configurations and verify thread safety with concurrent access tests.
+
+## 4. Implement Generic Ethernet Interface [pending]
+### Dependencies: 3.1, 3.2
+### Description: Create a generic Ethernet interface implementation that can be used as a base for specific Ethernet hardware drivers. Include common Ethernet functionality and hardware abstraction.
+### Details:
+1. Create an EthernetInterface struct that implements the NetworkInterface trait:
+   - Implement common Ethernet frame handling logic
+   - Support standard Ethernet frame formats
+   - Handle MAC address filtering
+   - Implement ARP protocol support
+   - Support for MTU configuration
+
+2. Create an EthernetDriverInterface trait that hardware-specific drivers must implement:
+   - Define low-level hardware access methods
+   - Define interrupt handling mechanisms
+   - Define DMA buffer management
+
+3. Implement Ethernet-specific statistics:
+   - Track frame types (unicast, multicast, broadcast)
+   - Monitor CRC errors and frame alignment errors
+   - Track PAUSE frame handling
+
+4. Add support for Ethernet link state detection and speed negotiation
+
+5. Implement power management features (WoL, energy-efficient Ethernet)
+
+Testing approach: Create tests for Ethernet frame handling, MAC address filtering, and protocol support. Test with different frame types and sizes. Verify proper handling of error conditions and edge cases.
+
+## 5. Implement Loopback Interface for Testing [pending]
+### Dependencies: 3.1, 3.2, 3.3
+### Description: Create a loopback interface implementation that can be used for testing the IP stack without physical hardware. Ensure it provides realistic behavior for development and testing purposes.
+### Details:
+1. Implement a LoopbackInterface struct that implements the NetworkInterface trait:
+   - Create an internal packet queue for looped-back packets
+   - Implement `send_packet()` to store packets in the queue
+   - Implement `receive_packet()` to retrieve packets from the queue
+   - Use a configurable MAC address (default to a reserved loopback address)
+   - Simulate realistic timing and behavior
+
+2. Add configuration options for the loopback interface:
+   - Configurable packet delay
+   - Simulated packet loss rate
+   - Bandwidth limitation
+   - MTU settings
+
+3. Implement realistic statistics tracking:
+   - Count packets and bytes through the interface
+   - Track queue utilization and drops
+
+4. Add support for multiple concurrent loopback interfaces
+
+5. Implement integration with the interface registry from subtask 3
+
+Testing approach: Create comprehensive tests that verify the loopback interface correctly loops back packets. Test with various packet sizes, delays, and loss rates. Verify correct behavior under high load and edge conditions. Test integration with the IP stack to ensure proper functionality.
+

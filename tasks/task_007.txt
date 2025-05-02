@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: ICMP and ICMPv6 Implementation
+# Status: pending
+# Dependencies: 4, 5
+# Priority: medium
+# Description: Implement Internet Control Message Protocol for both IPv4 and IPv6 to support error reporting and diagnostic functions.
+# Details:
+Implement ICMP message types (echo, destination unreachable, redirect, etc.). Create ICMPv6 implementation including Neighbor Discovery. Support for Path MTU Discovery. Implement error handling and reporting. Create ping functionality for both protocols. Ensure proper integration with IPv4 and IPv6 stacks. Implement rate limiting for ICMP responses to prevent DoS attacks.
+
+# Test Strategy:
+Unit tests for ICMP message creation and parsing. Test ping functionality. Verify error reporting scenarios. Test Neighbor Discovery for IPv6. Validate against RFC compliance test cases.
