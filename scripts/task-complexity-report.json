@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "generatedAt": "2025-05-02T03:51:05.151Z",
+    "tasksAnalyzed": 15,
+    "thresholdScore": 5,
+    "projectName": "Your Project Name",
+    "usedResearch": true
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 1,
+      "taskTitle": "Project Setup and Repository Structure",
+      "complexityScore": 6,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the project setup into subtasks covering Rust workspace initialization, crate creation (core, protocols, security, platform), Cargo.toml configuration, no_std and std feature setup, cross-compilation build scripts, documentation scaffolding, and directory structure mirroring NetXDuo components.",
+      "reasoning": "Setting up a multi-crate Rust workspace with embedded and cross-compilation support requires careful planning, but follows established best practices. The task is moderately complex due to the need for correct dependency management, build configuration, and documentation structure, but is well-supported by Rust tooling and community standards.[1][2][3][4][5]"
+    },
+    {
+      "taskId": 2,
+      "taskTitle": "Core Data Structures and Memory Management",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Decompose this task into subtasks for packet buffer design, buffer pool allocator implementation, thread-safe and zero-copy buffer management, network address and protocol identifier structures, optimized packet queues and linked lists, and Rust ownership model enforcement for safety.",
+      "reasoning": "Implementing efficient, safe, and thread-safe data structures for embedded networking is challenging, especially with zero-copy and Rust's ownership model. The need for configurable, optimized memory management and prevention of memory errors increases complexity."
+    },
+    {
+      "taskId": 3,
+      "taskTitle": "Network Interface Abstraction",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide this task into subtasks for defining the NetworkInterface trait, implementing a generic Ethernet interface, driver registration, multi-interface support, statistics collection, and loopback interface creation.",
+      "reasoning": "Abstracting hardware interfaces with Rust traits and supporting multiple concurrent interfaces is moderately complex, requiring careful API design and extensibility for future hardware drivers."
+    },
+    {
+      "taskId": 4,
+      "taskTitle": "IPv4 Protocol Implementation",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Expand into subtasks for IPv4 header parsing/creation, fragmentation and reassembly, routing table and lookup, IP options support, address management/subnetting, and checksum/TTL handling with RFC compliance.",
+      "reasoning": "Implementing a full IPv4 stack with fragmentation, routing, options, and compliance is complex, especially for embedded systems where efficiency and correctness are critical."
+    },
+    {
+      "taskId": 5,
+      "taskTitle": "IPv6 Protocol Implementation",
+      "complexityScore": 9,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down into subtasks for IPv6 header and extension parsing, address management/SLAAC, Neighbor Discovery Protocol, routing and route selection, fragmentation, dual-stack support, and RFC compliance.",
+      "reasoning": "IPv6 introduces additional complexity over IPv4, including extension headers, neighbor discovery, and dual-stack operation, all of which require careful, standards-compliant implementation."
+    },
+    {
+      "taskId": 6,
+      "taskTitle": "ARP Protocol Implementation",
+      "complexityScore": 6,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Split into subtasks for ARP cache and timeout management, ARP packet handling (request/response/gratuitous), ARP table management with aging and manual entry API, and RARP implementation.",
+      "reasoning": "ARP is simpler than IP protocols but still requires careful handling of cache, timeouts, and memory optimization for embedded targets."
+    },
+    {
+      "taskId": 7,
+      "taskTitle": "ICMP and ICMPv6 Implementation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Decompose into subtasks for ICMP/ICMPv6 message type handling, error reporting, ping/path MTU discovery, integration with IP stacks, and ICMP rate limiting.",
+      "reasoning": "Supporting both ICMP and ICMPv6 with proper error handling, diagnostics, and integration with IPv4/IPv6 stacks adds moderate complexity, especially with security considerations like rate limiting."
+    },
+    {
+      "taskId": 8,
+      "taskTitle": "UDP Protocol Implementation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Expand into subtasks for UDP header parsing/creation, checksum calculation, socket abstraction (bind/sendto/recvfrom), multicast and socket options, and zero-copy optimizations.",
+      "reasoning": "UDP is simpler than TCP but still requires careful socket API design, support for both IP versions, and optimizations for embedded systems."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "TCP Protocol Implementation",
+      "complexityScore": 10,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down into subtasks for TCP header parsing, state machine and connection management, sequence/acknowledgment tracking, flow/congestion control, socket abstraction, TCP options, and embedded retransmission optimizations.",
+      "reasoning": "TCP is the most complex protocol in the stack, requiring robust state management, reliability, flow/congestion control, and efficient handling for embedded environments."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "DHCP Client Implementation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide into subtasks for DHCP message/state machine, options processing, lease management, timeout/retransmission handling, multi-interface support, event notification, and static fallback.",
+      "reasoning": "DHCP involves protocol state machines, lease management, and integration with network interfaces, which is moderately complex, especially with IPv6 (DHCPv6) support."
+    },
+    {
+      "taskId": 11,
+      "taskTitle": "DNS Client Implementation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Expand into subtasks for DNS message parsing, query generation (A/AAAA/MX/etc.), caching with TTL, synchronous/asynchronous API, multi-server fallback, and optional DNSSEC validation.",
+      "reasoning": "DNS client implementation requires robust parsing, caching, support for multiple record types, and both sync/async APIs, adding moderate complexity."
+    },
+    {
+      "taskId": 12,
+      "taskTitle": "TLS/DTLS Security Implementation",
+      "complexityScore": 9,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down into subtasks for integrating cryptographic libraries, TLS/DTLS handshake implementation, certificate validation/management, secure socket abstraction, cipher suite selection, and session resumption.",
+      "reasoning": "Implementing secure communications with TLS/DTLS, integrating cryptography, and supporting embedded constraints is highly complex and security-critical."
+    },
+    {
+      "taskId": 13,
+      "taskTitle": "HTTP Client and Server Implementation",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Decompose into subtasks for HTTP request/response parsing, client and server API, routing and content negotiation, chunked transfer and persistent connections, HTTPS integration, and blocking/non-blocking support.",
+      "reasoning": "HTTP/HTTPS requires robust parsing, flexible APIs, persistent connections, and integration with TLS, all while optimizing for embedded constraints."
+    },
+    {
+      "taskId": 14,
+      "taskTitle": "MQTT Client Implementation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Expand into subtasks for MQTT packet format handling, client state machine (connect/publish/subscribe), QoS and topic filtering, persistent sessions and will messages, keep-alive/ping, TLS support, and event-driven API.",
+      "reasoning": "MQTT client implementation involves protocol state machines, QoS handling, session persistence, and secure communication, which is moderately complex."
+    },
+    {
+      "taskId": 15,
+      "taskTitle": "Comprehensive Testing and Documentation",
+      "complexityScore": 9,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down into subtasks for integration/conformance tests, performance benchmarks, fuzz/security testing, API documentation, tutorials, CI/CD pipeline setup, porting guides, and example applications.",
+      "reasoning": "Comprehensive testing and documentation for a full network stack is highly complex, requiring coverage of all protocols, performance, security, and extensive documentation for users and maintainers."
+    }
+  ]
+}
