@@ -1,156 +1,134 @@
-# Eclipse ThreadX NetX Duo
+# NetXDuo Rust Port (RustXDuo)
 
-This advanced, industrial-grade TCP/IP network stack is designed specifically for deeply embedded real-time and IoT applications. Eclipse ThreadX NetX Duo is a dual IPv4 and IPv6 network stack.
+이 프로젝트는 Eclipse ThreadX NetX Duo TCP/IP 네트워크 스택을 Rust 프로그래밍 언어로 포팅하는 작업입니다. Task Master를 활용한 체계적인 접근 방식으로 바이브 코딩(Vibe Coding)을 통해 C 코드베이스를 Rust로 변환합니다.
 
-Here are the key features and modules of NetX Duo:
+## 프로젝트 개요
 
-![NetX Duo Key Features](./docs/netx-duo-features.png)
+NetXDuo는 임베디드 실시간 및 IoT 애플리케이션을 위한 산업용 TCP/IP 네트워크 스택으로, IPv4와 IPv6를 모두 지원합니다. 이 포팅 프로젝트는 원본 C 구현의 모든 기능을 유지하면서 Rust의 메모리 안전성, 동시성 안전성, 현대적인 언어 기능을 활용합니다.
 
-## Getting Started
+### 주요 목표
 
-NetX Duo as part of Eclipse ThreadX has been integrated to the semiconductor's SDKs and development environment. You can develop using the tools of choice from [STMicro](https://www.st.com/content/st_com/en/campaigns/x-cube-azrtos-azure-rtos-stm32.html), [NXP](https://www.nxp.com/design/software/embedded-software/azure-rtos-for-nxp-microcontrollers:AZURE-RTOS), [Renesas](https://github.com/renesas/azure-rtos) and [Microchip](https://mu.microchip.com/get-started-simplifying-your-iot-design-with-azure-rtos).
+- Rust의 안전성 기능을 활용하여 메모리 및 동시성 버그 제거
+- 원본 C 구현과 비교하여 성능 유지 또는 향상
+- 모든 기존 프로토콜 및 기능 지원
+- 포괄적인 문서화 및 예제 제공
+- Clean Architecture와 SOLID 원칙을 따르는 유지보수 가능한 코드베이스 구축
+- 철저한 테스트 구현 (단위 테스트, 통합 테스트, 벤치마크)
 
-We also provide [getting started guide](https://github.com/eclipse-threadx/getting-started) and [samples](https://github.com/eclipse-threadx/samples) using hero development boards from semiconductors you can build and test with.
+## Task Master를 활용한 개발 접근 방식
 
-See [Overview of Eclipse ThreadX NetX Duo](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/overview-netx-duo.md) for the high-level overview.
+이 프로젝트는 Task Master를 사용하여 체계적인 개발 워크플로우를 구현합니다. Task Master는 복잡한 프로젝트를 관리 가능한 작업으로 분해하고, 의존성을 추적하며, 진행 상황을 모니터링하는 도구입니다.
 
-## Repository Structure and Usage
+### 작업 구조
 
-### Directory layout
+프로젝트는 다음과 같은 주요 작업으로 구성되어 있습니다:
 
-    .
-    ├── addons                  # NetX Duo addon modules for protocols and connectivity
-    ├── cmake                   # CMakeList files for building the project
-    ├── common                  # Core NetX Duo files
-    ├── crypto_libraries        # NetX Crypto files
-    ├── nx_secure               # NetX Secure files
-    ├── ports                   # Architecture and compiler specific files
-    ├── samples                 # Sample codes
-    ├── utility                 # Test cases and utilities (e.g. iperf)
-    ├── LICENSE.txt             # License terms
-    ├── LICENSE-HARDWARE.txt    # Licensed hardware from semiconductors
-    ├── CONTRIBUTING.md         # Contribution guidance
-    └── SECURITY.md             # Microsoft repo security guidance
+1. **프로젝트 설정 및 저장소 구조**
+   - Rust 워크스페이스 구조 설정
+   - 빌드 구성 및 의존성 관리
+   - 문서화 및 테스트 인프라 구축
 
-### Branches & Releases
+2. **핵심 데이터 구조 및 메모리 관리**
+   - 패킷 표현 및 버퍼 관리
+   - 네트워크 주소 추상화
+   - 스레드 안전 버퍼 관리
 
-The master branch has the most recent code with all new features and bug fixes. It does not represent the latest General Availability (GA) release of the library. Each official release (preview or GA) will be tagged to mark the commit and push it into the Github releases tab, e.g. `v6.2-rel`.
+3. **네트워크 인터페이스 추상화**
+   - 하드웨어 추상화 계층
+   - 드라이버 인터페이스
+   - 인터페이스 관리 시스템
 
-> When you see xx-xx-xxxx, 6.x or x.x in function header, this means the file is not officially released yet. They will be updated in the next release. See example below.
+4. **프로토콜 구현**
+   - IPv4 및 IPv6 프로토콜
+   - TCP 및 UDP 전송 프로토콜
+   - ARP, ICMP 등 기본 프로토콜
+   - HTTP, MQTT, DHCP 등 상위 프로토콜
+
+5. **보안 구현**
+   - TLS/DTLS 구현
+   - 암호화 라이브러리
+   - 인증서 관리
+
+### 개발 워크플로우
+
 ```
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _tx_initialize_low_level                          Cortex-M23/GNU    */
-/*                                                           6.x          */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Scott Larson, Microsoft Corporation                                 */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function is responsible for any low-level processor            */
-/*    initialization, including setting up interrupt vectors, setting     */
-/*    up a periodic timer interrupt source, saving the system stack       */
-/*    pointer for use in ISR processing later, and finding the first      */
-/*    available RAM memory address for tx_application_define.             */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    _tx_initialize_kernel_enter           ThreadX entry function        */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  09-30-2020      Scott Larson            Initial Version 6.1           */
-/*  xx-xx-xxxx      Scott Larson            Include tx_user.h,            */
-/*                                            resulting in version 6.x    */
-/*                                                                        */
-/**************************************************************************/ 
+1. 작업 분석 및 복잡도 평가 (task-master analyze-complexity)
+2. 작업 세분화 (task-master expand --id=<id>)
+3. 테스트 작성 (TDD 접근 방식)
+4. 구현 및 리팩토링
+5. 작업 완료 표시 (task-master set-status --id=<id> --status=done)
+6. 다음 작업 선택 (task-master next)
 ```
 
-## Protocols and connectivity
+## 프로젝트 구조
 
-Protocols and connectivity support are provided as addon modules within NetX Duo in `addons` folder. Some key modules are: [**azure_iot**](https://github.com/eclipse-threadx/netxduo/tree/master/addons/azure_iot), [**dhcp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-dhcp-client/chapter1.md), [**dns**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-dns/chapter1.md), [**ftp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-ftp/chapter1.md), [**http**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-http/Chapter1.md), [**mqtt**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-mqtt/chapter1.md), [**pop3**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-pop3-client/chapter1.md), [**ppp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-ppp/chapter1.md), [**rtp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-rtp/chapter1.md), [**rtsp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-rtsp/chapter1.md), [**sntp**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-sntp-client/chapter1.md), and [**web**](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/netx-duo-telnet/chapter1.md). For a full list of NetX Duo addons, you can find in the same [Eclipse ThreadX NetX Duo documentation](https://github.com/eclipse-threadx/rtos-docs/blob/main/rtos-docs/netx-duo/overview-netx-duo.md).
+```
+netxduo-rust/
+├── netxduo-core/           # 핵심 데이터 구조 및 기본 기능
+├── netxduo-protocols/      # 네트워크 프로토콜 구현
+├── netxduo-security/       # 보안 및 암호화 기능
+├── netxduo-platform/       # 플랫폼 추상화 및 드라이버
+├── examples/               # 예제 애플리케이션
+├── tests/                  # 통합 테스트
+├── docs/                   # 문서화
+└── tasks/                  # Task Master 작업 정의
+```
 
-### Samples
+## 시작하기
 
-We provide sample codes about how to use various addons in the [`samples`](./samples/) folder.
+### 필수 도구
 
-## Component dependencies
+- Rust 및 Cargo (최신 안정 버전)
+- Task Master CLI (`npm install -g claude-task-master`)
+- 임베디드 개발을 위한 도구:
+  - Arm GNU 툴체인 (arm-none-eabi)
+  - LLVM/Clang (최신 버전)
+  - CMake 3.0 이상
 
-The main components of Eclipse ThreadX are each provided in their own repository, but there are dependencies between them, as shown in the following graph. This is important to understand when setting up your builds.
+### 프로젝트 설정
 
-![dependency graph](docs/deps.png)
+```bash
+# 저장소 클론
+git clone --recursive https://github.com/your-org/netxduo-rust.git
+cd netxduo-rust
 
-> You will have to take the dependency graph above into account when building anything other than ThreadX itself.
+# 작업 목록 확인
+task-master list
 
-### Building and using the library
+# 다음 작업 확인
+task-master next
 
-Instruction for building the NetX Duo as static library using Arm GNU Toolchain and CMake. If you are using toolchain and IDE from semiconductor, you might follow its own instructions to use Eclipse ThreadX components as explained in the [Getting Started](#getting-started) section.
+# 작업 확장
+task-master expand --id=<id> --research
+```
 
-1. Install the following tools:
+## 테스트 전략
 
-    * [CMake](https://cmake.org/download/) version 3.0 or later
-    * [Arm GNU Toolchain for arm-none-eabi](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
-    * [Ninja](https://ninja-build.org/)
+- 모든 구성 요소에 대한 단위 테스트
+- 프로토콜 상호 작용을 위한 통합 테스트
+- 프로토콜 사양에 대한 적합성 테스트
+- 성능 벤치마크
+- 보안 중요 구성 요소에 대한 퍼즈 테스트
+- 다른 구현과의 상호 운용성 테스트
 
-1. Build the [ThreadX library](https://github.com/eclipse-threadx/threadx#building-and-using-the-library) as the dependency.
+## 기여하기
 
-1. Cloning the repo. NetX Duo has a couple of dependencies that are included as submodules.
+기여는 언제나 환영합니다! 다음 단계를 따라주세요:
 
-    ```bash
-    $ git clone --recursive https://github.com/eclipse-threadx/netxduo.git
-    ```
+1. 이슈 생성 또는 기존 이슈 확인
+2. 포크 및 브랜치 생성
+3. 코드 작성 및 테스트
+4. PR 제출
 
-1. Define the features and addons you need in `nx_user.h` and build together with the component source code. You can refer to [`nx_user_sample.h`](https://github.com/eclipse-threadx/netxduo/blob/master/common/inc/nx_user_sample.h) as an example.
+모든 기여는 [CONTRIBUTING.md](./CONTRIBUTING.md)에 명시된 지침을 따라야 합니다.
 
-1. Building as a static library
+## 라이선스
 
-    Each component of Eclipse ThreadX comes with a composable CMake-based build system that supports many different MCUs and host systems. Integrating any of these components into your device app code is as simple as adding a git submodule and then including it in your build using the CMake `add_subdirectory()`.
+이 프로젝트는 원본 NetXDuo와 동일한 라이선스 조건을 따릅니다. 자세한 내용은 [LICENSE.txt](./LICENSE.txt) 파일을 참조하세요.
 
-    While the typical usage pattern is to include NetX Duo into your device code source tree to be built & linked with your code, you can compile this project as a standalone static library to confirm your build is set up correctly.
+## 원본 NetXDuo 프로젝트
 
-    An example of building the library for Cortex-M4:
+이 프로젝트는 다음 Eclipse ThreadX NetX Duo 프로젝트를 기반으로 합니다:
+[https://github.com/eclipse-threadx/netxduo](https://github.com/eclipse-threadx/netxduo)
 
-    ```bash
-    $ cmake -Bbuild -GNinja -DCMAKE_TOOLCHAIN_FILE=cmake/cortex_m4.cmake .
-
-    $ cmake --build ./build
-    ```
-
-## Licensing
-
-License terms for using Eclipse ThreadX are defined in the LICENSE.txt file of this repo. Please refer to this file for all definitive licensing information for all content, incl. the history of this repo. 
-
-## Resources
-
-The following are references to additional Eclipse ThreadX resources:
-
-- **Product introduction**: https://github.com/eclipse-threadx/rtos-docs
-- **Product issues and bugs, or feature requests**: https://github.com/eclipse-threadx/netxduo/issues
-- **TraceX Installer**: https://aka.ms/azrtos-tracex-installer
-
-You can also check [previous questions](https://stackoverflow.com/questions/tagged/threadx-rtos+netxduo) or ask new ones on StackOverflow using the `threadx-rtos` and `netxduo` tags.
-
-## Security
-
-Eclipse ThreadX provides OEMs with components to secure communication and to create code and data isolation using underlying MCU/MPU hardware protection mechanisms. It is ultimately the responsibility of the device builder to ensure the device fully meets the evolving security requirements associated with its specific use case.
-
-## Contribution
-
-Please follow the instructions provided in the [CONTRIBUTING.md](./CONTRIBUTING.md) for the corresponding repository.
+원본 프로젝트에 대한 자세한 정보는 [Eclipse ThreadX 문서](https://github.com/eclipse-threadx/rtos-docs)를 참조하세요.
